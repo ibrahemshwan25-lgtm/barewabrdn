@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سیستەمی دابەشکردنی خۆراک و بەڕێوەبردن</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; color: black; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+    <div id="toastContainer" class="fixed top-5 left-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <header class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white shadow-lg sticky top-0 z-40 border-b border-emerald-700/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-emerald-600/50 border border-emerald-400/40 flex items-center justify-center shadow-inner">
+                    <i class="fas fa-boxes-stacked text-2xl text-emerald-200"></i>
+                </div>
+                <div>
+                    <h1 id="headerCenterName" class="text-lg md:text-xl font-bold tracking-tight text-white">سیستەمی دابەشکردنی خۆراک و بەڕێوەبردن</h1>
+                    <p class="text-xs text-emerald-200 flex flex-wrap items-center gap-2 mt-0.5">
+                        <span onclick="openEditCycleNameModal()" title="کرتە بکە بۆ گۆڕینی ناوی خول" class="cursor-pointer hover:bg-emerald-600 transition bg-emerald-700/90 px-2.5 py-0.5 rounded-md border border-emerald-400/50 flex items-center gap-1.5 font-semibold text-amber-200">
+                            <i class="fas fa-pen-to-square text-[10px]"></i>
+                            <span id="headerMonthBadge">خولی دابەشکردن: خولی یەکەم</span>
+                        </span>
+                        <span>•</span>
+                        <span id="cloudSyncBadge" class="inline-flex items-center gap-1.5 bg-emerald-950/70 px-2.5 py-0.5 rounded-md border border-emerald-500/40 text-emerald-200 font-semibold">
+                            <i class="fas fa-cloud text-emerald-300"></i>
+                            <span>لەسەر هەور پارێزراوە</span>
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openBackupModal()" class="p-2.5 rounded-xl bg-emerald-800/80 hover:bg-emerald-700 text-emerald-100 transition border border-emerald-600/40 flex items-center gap-2 text-xs font-medium">
+                    <i class="fas fa-shield-halved text-sm"></i>
+                    <span class="hidden md:inline">پاراستن و باکئەپ</span>
+                </button>
+                <button onclick="openModal('settingsModal')" class="p-2.5 rounded-xl bg-emerald-800/80 hover:bg-emerald-700 text-emerald-100 transition border border-emerald-600/40 flex items-center gap-2 text-xs font-medium">
+                    <i class="fas fa-gear text-sm"></i>
+                    <span class="hidden md:inline">ڕێکخستنەکان</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-20 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 space-x-reverse overflow-x-auto py-2">
+            <button onclick="switchTab('distribution')" id="tabBtn-distribution" class="px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap bg-emerald-700 text-white shadow-sm">
+                <i class="fas fa-users-rectangle"></i>
+                <span>لیستی خێزانەکان و دابەشکردن</span>
+            </button>
+            <button onclick="switchTab('warehouse')" id="tabBtn-warehouse" class="px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap text-slate-600 hover:bg-slate-100">
+                <i class="fas fa-warehouse"></i>
+                <span>کۆگا و چاودێری پشکەکان</span>
+            </button>
+            <button onclick="switchTab('archive')" id="tabBtn-archive" class="px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap text-slate-600 hover:bg-slate-100">
+                <i class="fas fa-box-archive"></i>
+                <span>ئەرشیفی خولە تەواوبووەکان</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full space-y-6">
+        <section id="section-distribution" class="space-y-6">
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold text-lg"><i class="fas fa-user-group"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">نەفەری تۆمارکراو</p>
+                        <h3 id="kpiTotalMembers" class="text-xl font-bold text-slate-800">٠</h3>
+                        <p class="text-[10px] text-emerald-600 mt-0.5">لە کۆی <span id="kpiTargetPeople">١٤٢٨</span> نەفەر</p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 font-bold text-lg"><i class="fas fa-hand-holding-dollar"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">کۆی پارەی واصل کرا</p>
+                        <h3 id="kpiTotalPaid" class="text-xl font-bold text-teal-800">٠ د.ع</h3>
+                        <p class="text-[10px] text-slate-500 mt-0.5">داواکراو: <span id="kpiTotalRequired">٠</span></p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 font-bold text-lg"><i class="fas fa-file-invoice-dollar"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">باقی حسابی ماوە (قەرز)</p>
+                        <h3 id="kpiTotalDebt" class="text-xl font-bold text-amber-800">٠ د.ع</h3>
+                        <p class="text-[10px] text-amber-600 mt-0.5">پارەی لێوەردەگیرێت</p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-bold text-lg"><i class="fas fa-circle-check"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">خێزانی وەرگر / وەرنەگر</p>
+                        <h3 class="text-lg font-bold text-blue-900"><span id="kpiReceivedCount">٠</span> / <span id="kpiUnreceivedCount" class="text-rose-600">٠</span></h3>
+                        <p id="kpiReceivePercentage" class="text-[10px] text-blue-600 mt-0.5">ڕێژە: ٠٪</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                    <div class="flex flex-wrap items-center gap-3 flex-grow">
+                        <div class="relative flex-grow sm:flex-grow-0 sm:w-80">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-slate-400"><i class="fas fa-search"></i></span>
+                            <input type="text" id="searchInput" oninput="renderTable()" placeholder="گەڕان بەدوای ناوی سەرۆک خێزان..." class="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                        </div>
+                        <select id="filterStatus" onchange="renderTable()" class="py-2.5 px-3 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                            <option value="all">هەموو دۆخەکان</option>
+                            <option value="received">وەریگرت</option>
+                            <option value="unreceived">وەرنەگرت</option>
+                            <option value="paid">حساب واصل</option>
+                            <option value="debt">باقی حساب (قەرز)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="exportToCSV()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition flex items-center gap-2 text-xs border border-slate-300 shadow-sm">
+                            <i class="fas fa-file-excel text-emerald-600"></i>
+                            <span>هەناردە بۆ ئێکسل</span>
+                        </button>
+                        <button onclick="openArchiveConfirmModal()" class="px-4 py-2.5 bg-gradient-to-r from-teal-700 to-emerald-800 hover:from-teal-800 hover:to-emerald-900 text-white font-medium rounded-xl transition flex items-center gap-2 text-xs shadow-sm">
+                            <i class="fas fa-box-archive"></i>
+                            <span>تەواوکردنی خول و ناردن بۆ ئەرشیف</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                    <div class="sm:col-span-6">
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">ناوی سیانی سەرۆک خێزان</label>
+                        <input type="text" id="newFamilyName" placeholder="بۆ نموونە: عومەر حەسەن ئەحمەد" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">ژمارەی نەفەر</label>
+                        <input type="text" id="newFamilyMembers" oninput="sanitizeNumericInput(this)" placeholder="ژمارە (بۆ نموونە: ٥)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div class="sm:col-span-3 flex items-end">
+                        <button onclick="addNewFamily()" class="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium rounded-xl transition flex items-center justify-center gap-2 text-xs shadow-sm">
+                            <i class="fas fa-user-plus"></i>
+                            <span>زیادکردنی خێزان</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-900 text-white text-[11px] font-semibold tracking-wide">
+                                <th class="p-3 text-center w-12">ز</th>
+                                <th class="p-3 min-w-[200px]">ناوی سیانی سەرۆک خێزان</th>
+                                <th class="p-3 text-center w-20">نەفەر</th>
+                                <th class="p-3 text-center w-28">کۆی پارە</th>
+                                <th class="p-3 text-center w-32">دۆخی حساب</th>
+                                <th class="p-3 text-center w-28">پارەی دراو</th>
+                                <th class="p-3 text-center w-28">پارە واصل</th>
+                                <th class="p-3 text-center w-28">باقی حساب</th>
+                                <th class="p-3 text-center w-28">دۆخی وەرگرتن</th>
+                                <th class="p-3 text-center w-28">بەروار</th>
+                                <th class="p-3 text-center w-24">شەکر</th>
+                                <th class="p-3 text-center w-24">ئارد/هارد</th>
+                                <th class="p-3 text-center w-24">برنج</th>
+                                <th class="p-3 text-center w-24">زەیت</th>
+                                <th class="p-3 text-center w-24">معجون</th>
+                                <th class="p-3 text-center w-24">نیسک</th>
+                                <th class="p-3 text-center w-24">ئارینۆک</th>
+                                <th class="p-3 text-center w-40">خۆراکی وەرنەگیراو</th>
+                                <th class="p-3 min-w-[150px]">تێبینی</th>
+                                <th class="p-3 text-center w-20">کردار</th>
+                            </tr>
+                        </thead>
+                        <tbody id="familiesTableBody" class="divide-y divide-slate-200 text-slate-700"></tbody>
+                        <tfoot>
+                            <tr id="tableTotalRow" class="bg-emerald-50 font-bold text-slate-900 border-t-2 border-emerald-600 text-xs"></tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-warehouse" class="space-y-6 hidden">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fas fa-warehouse text-emerald-700"></i>
+                        <span>کۆگا و چاودێریکردنی بڕی خۆراکی دابەشکراو و ماوە</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">ئەم خشتەیە بە شێوەی ئۆتۆماتیکی لەسەر بنەمای ژمارەی نەفەری تۆمارکراو لە خشتەی خێزانەکان هەژمار دەکرێت.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 font-medium">کۆی نەفەری پلان بۆ دانراو</span>
+                        <h4 id="whTargetPeople" class="text-xl font-bold text-slate-800 mt-1">١٤٢٨</h4>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 font-medium">نەفەری وەرگر (تا ئێستا)</span>
+                        <h4 id="whReceivedPeople" class="text-xl font-bold text-emerald-700 mt-1">٠</h4>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 font-medium">نەفەری ماوە (وەرنەگیراو)</span>
+                        <h4 id="whRemainingPeople" class="text-xl font-bold text-amber-700 mt-1">٠</h4>
+                    </div>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-right border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-900 text-white">
+                                <th class="p-3 text-center w-12">ز</th>
+                                <th class="p-3">ماددەی خۆراکی</th>
+                                <th class="p-3 text-center w-28">یەکەی پێوانە</th>
+                                <th class="p-3 text-center w-32">پشکی ١ نەفەر</th>
+                                <th class="p-3 text-center w-36">بڕی هاتوو بۆ کۆگا</th>
+                                <th class="p-3 text-center w-36">بڕی دابەشکراو</th>
+                                <th class="p-3 text-center w-36">بڕی ماوە</th>
+                                <th class="p-3 text-center w-32">ڕێژەی خەرجکردن</th>
+                                <th class="p-3 text-center w-40">دۆخی کۆگا</th>
+                            </tr>
+                        </thead>
+                        <tbody id="warehouseTableBody" class="divide-y divide-slate-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-archive" class="space-y-6 hidden">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fas fa-box-archive text-emerald-700"></i>
+                            <span>ئەرشیفی خولە تەواوبووەکانی دابەشکردنی خۆراک</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">هەموو ئەو خولانەی کە پێشتر تەواو کراون و نێردراون بۆ ئەرشیف، لێرە بە وردەکارییەوە دەپارێزرێن.</p>
+                    </div>
+                    <div class="w-full sm:w-64">
+                        <input type="text" id="archiveSearchInput" oninput="renderArchive()" placeholder="گەڕان لە ئەرشیفدا..." class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-right border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-900 text-white">
+                                <th class="p-3 text-center w-12">ز</th>
+                                <th class="p-3">ناوی خولی دابەشکردن</th>
+                                <th class="p-3 text-center w-36">بەرواری ئەرشیفکردن</th>
+                                <th class="p-3 text-center w-28">ژمارەی خێزان</th>
+                                <th class="p-3 text-center w-28">کۆی نەفەر</th>
+                                <th class="p-3 text-center w-32">پارەی واصل</th>
+                                <th class="p-3 text-center w-32">باقی حساب</th>
+                                <th class="p-3 text-center w-36">کردارەکان</th>
+                            </tr>
+                        </thead>
+                        <tbody id="archiveTableBody" class="divide-y divide-slate-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="editCycleNameModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-pen-to-square text-emerald-700"></i><span>گۆڕینی ناوی خولی دابەشکردن</span></h3>
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">ناوی خول (بۆ نموونە: خولی مانگی ١١ - ٢٠٢٦)</label>
+                <input type="text" id="modalCycleNameInput" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('editCycleNameModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium">پاشگەزبوونەوە</button>
+                <button onclick="updateCycleNameDirect()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-medium">نوێکردنەوە</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="archiveConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5">
+            <div class="flex items-center gap-3 text-amber-600">
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-xl"><i class="fas fa-triangle-exclamation"></i></div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">تەواوکردن و ناردنی خول بۆ ئەرشیف</h3>
+                    <p class="text-xs text-slate-500">ئایا دڵنیای لە تەواوکردنی ئەم خولە؟</p>
+                </div>
+            </div>
+            <div class="bg-amber-50/70 p-3.5 rounded-xl border border-amber-200 text-xs text-amber-900 space-y-1">
+                <p>• داتاکانی ئەم خولە بە تەواوی لە ئەرشیفدا خەزن دەبن.</p>
+                <p>• خشتەی ئێستا پاک دەبێتەوە بۆ دەستپێکردنی خولی نوێ.</p>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">ناوی خولی نوێ برای دەستپێکردن لە داهاتوودا:</label>
+                <input type="text" id="nextCycleNameInput" value="خولی دابەشکردنی خولی نوێ" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('archiveConfirmModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium">پاشگەزبوونەوە</button>
+                <button onclick="executeArchiveCycle()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-medium">دڵنیابوون و ناردن بۆ ئەرشیف</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="archiveDetailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 id="archiveModalTitle" class="text-base font-bold text-slate-900">وردەکاری خولی ئەرشیفکراو</h3>
+                <button onclick="closeModal('archiveDetailsModal')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark text-lg"></i></button>
+            </div>
+            <div id="archiveModalContent" class="overflow-y-auto flex-grow space-y-4 text-xs"></div>
+            <div class="flex justify-end pt-2 border-t border-slate-200">
+                <button onclick="exportArchiveToCSVFromModal()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-medium transition flex items-center gap-2"><i class="fas fa-file-excel"></i><span>داگرتنی ئەرشیف بە ئێکسل</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3 no-print">
+                <h3 class="text-base font-bold text-slate-900">پسوڵەی وەرگرتنی خۆراک و حساب</h3>
+                <button onclick="closeModal('receiptModal')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark text-lg"></i></button>
+            </div>
+            <div id="receiptContent" class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 text-xs"></div>
+            <div class="flex justify-end gap-2 pt-2 no-print">
+                <button onclick="closeModal('receiptModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium">پاشگەزبوونەوە</button>
+                <button onclick="window.print()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-medium flex items-center gap-2"><i class="fas fa-print"></i><span>چاپکردنی پسوڵە</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2"><i class="fas fa-gear text-emerald-700"></i><span>ڕێکخستنەکانی سیستەم و پشکی تاک</span></h3>
+                <button onclick="closeModal('settingsModal')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">ناوی ناوەند / بریکار</label>
+                    <input type="text" id="settingCenterName" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">کۆی نەفەری پلان (تۆمارکراو)</label>
+                        <input type="text" id="settingTargetPeople" oninput="sanitizeNumericInput(this)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">نرخی وەرگرتن بۆ ١ نەفەر (دینار)</label>
+                        <input type="text" id="settingPricePerPerson" oninput="sanitizeNumericInput(this)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl">
+                    </div>
+                </div>
+                <div class="border-t border-slate-200 pt-3">
+                    <h4 class="font-bold text-slate-800 mb-2">پشکی ماددە خۆراکییەکان بۆ هەر ١ نەفەر:</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block font-medium text-slate-600 mb-1">شەکر (کیلۆ)</label><input type="text" id="ratioSugar" oninput="sanitizeNumericInput(this, true)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"></div>
+                        <div><label class="block font-medium text-slate-600 mb-1">ئارد / هارد (کیلۆ)</label><input type="text" id="ratioFlour" oninput="sanitizeNumericInput(this, true)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"></div>
+                        <div><label class="block font-medium text-slate-600 mb-1">برنج (کیلۆ)</label><input type="text" id="ratioRice" oninput="sanitizeNumericInput(this, true)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"></div>
+                        <div><label class="block font-medium text-slate-600 mb-1">زەیت (بتڵ / لیتر)</label><input type="text" id="ratioOil" oninput="sanitizeNumericInput(this, true)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"></div>
+                        <div><label class="block font-medium text-slate-600 mb-1">معجون (قوتو)</label><input type="text" id="ratioPaste" oninput="sanitizeNumericInput(this, true)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"></div>
+                        <div><label class="block font-medium text-slate-600 mb-1">نیسک (کیلۆ)</label><input type="text" id="ratioLentils" oninput="sanitizeNumericInput(this, true)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"></div>
+                        <div><label class="block font-medium text-slate-600 mb-1">ئارینۆک (کیلۆ)</label><input type="text" id="ratioGroats" oninput="sanitizeNumericInput(this, true)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center pt-3 border-t border-slate-200">
+                <button onclick="resetDefaultSettings()" class="text-rose-600 hover:text-rose-700 font-medium text-xs">گەڕاندنەوەی بنەڕەتی</button>
+                <div class="flex gap-2">
+                    <button onclick="closeModal('settingsModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium">پاشگەزبوونەوە</button>
+                    <button onclick="saveSettings()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-medium">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="backupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2"><i class="fas fa-shield-halved text-emerald-700"></i><span>پاراستن و باکئەپی داتاکان</span></h3>
+                <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">هەموو زانیارییەکانت بە شێوەی ئۆتۆماتیکی لەسەر هەور پاشەکەوت دەبن و هەرگیز ناسڕێنەوە. هەروەها دەتوانیت کۆپییەکی باکئەپی (JSON) داببەزێنیت.</p>
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
+                <span class="text-slate-500 block font-semibold">کۆدی ناسێنەری هەژمارەکەت (User ID):</span>
+                <code id="displayUserId" class="text-[11px] font-mono text-emerald-900 break-all select-all">چاوەڕوانبە...</code>
+            </div>
+            <div class="space-y-3">
+                <button onclick="downloadJSONBackup()" class="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-medium rounded-xl transition flex items-center justify-center gap-2 text-xs shadow-sm">
+                    <i class="fas fa-download"></i><span>داگرتنی فایلی باکئەپ (JSON)</span>
+                </button>
+                <label class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition flex items-center justify-center gap-2 text-xs cursor-pointer border border-slate-300">
+                    <i class="fas fa-upload"></i><span>گەڕاندنەوەی داتا لە باکئەپ</span>
+                    <input type="file" id="restoreFile" accept=".json" onchange="restoreJSONBackup(event)" class="hidden">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'kurdish-food-ration-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let unsubscribeDoc = null;
+        let isApplyingRemoteUpdate = false;
+        let selectedArchiveIndex = null;
+
+        const DEFAULT_SETTINGS = {
+            centerName: 'سیستەمی دابەشکردنی خۆراک و بەڕێوەبردن',
+            currentMonth: 'خولی یەکەم',
+            targetPeople: 1428,
+            pricePerPerson: 2000,
+            rations: { sugar: 1, flour: 9, rice: 3, oil: 1, paste: 1, lentils: 0.5, groats: 0.5 }
+        };
+
+        const UNRECEIVED_FOOD_OPTIONS = [
+            'هیچ (هەمووی وەرگرتووە)', 'هەموو خۆراکەکان', 'شەکر', 'ئارد (هارد)', 'برنج', 'زەیت', 'معجون', 'نیسک', 'ئارینۆک'
+        ];
+
+        function getTodayDate() {
+            const d = new Date();
+            return `${convertToEnglishDigits(d.getFullYear())}-${convertToEnglishDigits(String(d.getMonth() + 1).padStart(2, '0'))}-${convertToEnglishDigits(String(d.getDate()).padStart(2, '0'))}`;
+        }
+
+        const SAMPLE_FAMILIES = [
+            { id: 'fam-1', name: 'ئەحمەد مەحمود قادر', members: 5, accountStatus: 'حساب واصل', manualPaid: 0, receiveStatus: 'وەریگرت', receiveDate: getTodayDate(), unreceivedFood: 'هیچ (هەمووی وەرگرتووە)', notes: '' },
+            { id: 'fam-2', name: 'سۆران عەلی حەسەن', members: 4, accountStatus: 'باقی حساب', manualPaid: 4000, receiveStatus: 'وەریگرت', receiveDate: getTodayDate(), unreceivedFood: 'شەکر', notes: 'نیوەی پارەکەی داوە' }
+        ];
+
+        let appState = {
+            settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+            families: [...SAMPLE_FAMILIES],
+            archives: []
+        };
+
+        function showToast(msg, isErr = false) {
+            const c = document.getElementById('toastContainer');
+            if (!c) return;
+            const t = document.createElement('div');
+            t.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg border text-xs font-semibold flex items-center gap-2 transition transform translate-y-2 opacity-0 ${isErr ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`;
+            t.innerHTML = `<i class="fas ${isErr ? 'fa-circle-exclamation text-rose-600' : 'fa-circle-check text-emerald-600'}"></i><span>${msg}</span>`;
+            c.appendChild(t);
+            setTimeout(() => t.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => { t.classList.add('translate-y-2', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 3500);
+        }
+
+        function updateSyncStatus(status, text) {
+            const badge = document.getElementById('cloudSyncBadge');
+            if (!badge) return;
+            if (status === 'synced') badge.innerHTML = `<i class="fas fa-cloud text-emerald-300"></i><span class="text-emerald-100">${text}</span>`;
+            else if (status === 'saving') badge.innerHTML = `<i class="fas fa-sync fa-spin text-amber-300"></i><span class="text-amber-200">${text}</span>`;
+            else if (status === 'error') badge.innerHTML = `<i class="fas fa-triangle-exclamation text-rose-400"></i><span class="text-rose-200">${text}</span>`;
+        }
+
+        function convertToEnglishDigits(str) {
+            if (str === null || str === undefined) return '';
+            const arabic = '٠١٢٣٤٥٦٧٨٩';
+            const persian = '۰۱۲۳۴۵۶۷۸۹';
+            return String(str).replace(/[٠-٩۰-۹]/g, ch => {
+                const i1 = arabic.indexOf(ch);
+                if (i1 !== -1) return String(i1);
+                const i2 = persian.indexOf(ch);
+                if (i2 !== -1) return String(i2);
+                return ch;
+            });
+        }
+
+        window.sanitizeNumericInput = function(inputEl, allowDecimal = false) {
+            let val = convertToEnglishDigits(inputEl.value);
+            if (allowDecimal) {
+                val = val.replace(/[٫,]/g, '.').replace(/[^0-9.]/g, '');
+                const p = val.split('.');
+                if (p.length > 2) val = p[0] + '.' + p.slice(1).join('');
+            } else {
+                val = val.replace(/[^0-9]/g, '');
+            }
+            if (inputEl.value !== val) inputEl.value = val;
+        };
+
+        window.switchTab = function(id) {
+            ['distribution', 'warehouse', 'archive'].forEach(tab => {
+                const s = document.getElementById(`section-${tab}`);
+                const b = document.getElementById(`tabBtn-${tab}`);
+                if (s && b) {
+                    if (tab === id) {
+                        s.classList.remove('hidden');
+                        b.className = "px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap bg-emerald-700 text-white shadow-sm";
+                    } else {
+                        s.classList.add('hidden');
+                        b.className = "px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap text-slate-600 hover:bg-slate-100";
+                    }
+                }
+            });
+            if (id === 'warehouse') renderWarehouse();
+            if (id === 'archive') renderArchive();
+        };
+
+        window.openModal = id => document.getElementById(id)?.classList.remove('hidden');
+        window.closeModal = id => document.getElementById(id)?.classList.add('hidden');
+        window.openBackupModal = () => openModal('backupModal');
+
+        window.openEditCycleNameModal = () => {
+            document.getElementById('modalCycleNameInput').value = appState.settings.currentMonth || '';
+            openModal('editCycleNameModal');
+        };
+
+        window.updateCycleNameDirect = async () => {
+            const name = document.getElementById('modalCycleNameInput').value.trim();
+            if (!name) { showToast('تکایە ناوی خول بنووسە', true); return; }
+            appState.settings.currentMonth = name;
+            updateHeaderLabels();
+            closeModal('editCycleNameModal');
+            await saveState();
+            showToast('ناوی خول نوێکرایەوە!');
+        };
+
+        function updateHeaderLabels() {
+            document.getElementById('headerCenterName').textContent = appState.settings.centerName || 'سیستەمی دابەشکردنی خۆراک';
+            document.getElementById('headerMonthBadge').textContent = `خولی دابەشکردن: ${appState.settings.currentMonth || 'خولی یەکەم'}`;
+            document.getElementById('kpiTargetPeople').textContent = formatNumber(appState.settings.targetPeople);
+        }
+
+        function formatNumber(num) {
+            return convertToEnglishDigits(Number(num || 0).toLocaleString('en-US'));
+        }
+
+        function calculateFamilyValues(fam) {
+            const members = Number(convertToEnglishDigits(fam.members) || 0);
+            const price = Number(convertToEnglishDigits(appState.settings.pricePerPerson) || 2000);
+            const totalRequired = members * price;
+            const paid = fam.accountStatus === 'حساب واصل' ? totalRequired : Number(convertToEnglishDigits(fam.manualPaid) || 0);
+            const balance = Math.max(0, totalRequired - paid);
+            const rat = appState.settings.rations;
+            const rationsCalc = {
+                sugar: members * Number(rat.sugar || 0),
+                flour: members * Number(rat.flour || 0),
+                rice: members * Number(rat.rice || 0),
+                oil: members * Number(rat.oil || 0),
+                paste: members * Number(rat.paste || 0),
+                lentils: members * Number(rat.lentils || 0),
+                groats: members * Number(rat.groats || 0)
+            };
+            return { members, totalRequired, paid, balance, rationsCalc };
+        }
+
+        window.addNewFamily = async () => {
+            const nameInput = document.getElementById('newFamilyName');
+            const membersInput = document.getElementById('newFamilyMembers');
+            const name = nameInput.value.trim();
+            const members = Number(convertToEnglishDigits(membersInput.value));
+            if (!name) { showToast('تکایە ناوی سەرۆک خێزان بنووسە', true); return; }
+            if (!members || members <= 0) { showToast('تکایە ژمارەی نەفەری ڕاست بنووسە', true); return; }
+
+            appState.families.push({
+                id: 'fam-' + Date.now() + '-' + Math.floor(Math.random()*1000),
+                name, members,
+                accountStatus: 'حساب واصل', manualPaid: 0,
+                receiveStatus: 'وەرنەگرت', receiveDate: getTodayDate(),
+                unreceivedFood: 'هیچ (هەمووی وەرگرتووە)', notes: ''
+            });
+            nameInput.value = '';
+            membersInput.value = '';
+            renderAll();
+            await saveState();
+            showToast('خێزانەکە زیادکرا!');
+        };
+
+        window.updateFamilyField = async (famId, field, value) => {
+            const fam = appState.families.find(f => f.id === famId);
+            if (!fam) return;
+            if (field === 'members') fam.members = Number(convertToEnglishDigits(value) || 0);
+            else if (field === 'accountStatus') { fam.accountStatus = value; if (value === 'حساب واصل') fam.manualPaid = 0; }
+            else if (field === 'manualPaid') fam.manualPaid = Number(convertToEnglishDigits(value) || 0);
+            else if (field === 'receiveStatus') { fam.receiveStatus = value; if (!fam.receiveDate) fam.receiveDate = getTodayDate(); }
+            else fam[field] = value;
+
+            renderAll();
+            await saveState();
+        };
+
+        window.confirmDeleteFamily = async (famId) => {
+            if (confirm('ئایا دڵنیای لە سڕینەوەی ئەم خێزانە؟')) {
+                appState.families = appState.families.filter(f => f.id !== famId);
+                renderAll();
+                await saveState();
+                showToast('خێزانەکە سڕایەوە!');
+            }
+        };
+
+        window.renderTable = () => {
+            const tbody = document.getElementById('familiesTableBody');
+            const totalRow = document.getElementById('tableTotalRow');
+            if (!tbody || !totalRow) return;
+
+            const searchTxt = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+            const filterVal = document.getElementById('filterStatus')?.value || 'all';
+
+            const filtered = appState.families.filter(fam => {
+                if (!fam.name.toLowerCase().includes(searchTxt)) return false;
+                if (filterVal === 'received') return fam.receiveStatus === 'وەریگرت';
+                if (filterVal === 'unreceived') return fam.receiveStatus === 'وەرنەگرت';
+                if (filterVal === 'paid') return fam.accountStatus === 'حساب واصل';
+                if (filterVal === 'debt') return calculateFamilyValues(fam).balance > 0;
+                return true;
+            });
+
+            let html = '', sumMembers = 0, sumReq = 0, sumPaid = 0, sumBal = 0;
+            let sumS = 0, sumF = 0, sumR = 0, sumO = 0, sumP = 0, sumL = 0, sumG = 0;
+            let cRec = 0, cUnrec = 0;
+
+            filtered.forEach((fam, idx) => {
+                const calc = calculateFamilyValues(fam);
+                sumMembers += calc.members; sumReq += calc.totalRequired; sumPaid += calc.paid; sumBal += calc.balance;
+                sumS += calc.rationsCalc.sugar; sumF += calc.rationsCalc.flour; sumR += calc.rationsCalc.rice;
+                sumO += calc.rationsCalc.oil; sumP += calc.rationsCalc.paste; sumL += calc.rationsCalc.lentils; sumG += calc.rationsCalc.groats;
+                if (fam.receiveStatus === 'وەریگرت') cRec++; else cUnrec++;
+
+                const isRec = fam.receiveStatus === 'وەریگرت';
+                const isPaid = fam.accountStatus === 'حساب واصل';
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 text-center font-medium text-slate-500">${idx + 1}</td>
+                        <td class="p-3"><input type="text" value="${fam.name}" onchange="updateFamilyField('${fam.id}', 'name', this.value)" class="w-full px-2 py-1 bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-emerald-500 rounded-lg font-medium"></td>
+                        <td class="p-3 text-center"><input type="text" value="${fam.members}" oninput="sanitizeNumericInput(this)" onchange="updateFamilyField('${fam.id}', 'members', this.value)" class="w-14 text-center px-2 py-1 bg-slate-50 border border-slate-300 rounded-lg font-bold"></td>
+                        <td class="p-3 text-center font-bold text-slate-900">${formatNumber(calc.totalRequired)}</td>
+                        <td class="p-3 text-center">
+                            <select onchange="updateFamilyField('${fam.id}', 'accountStatus', this.value)" class="px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-semibold ${isPaid ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'}">
+                                <option value="حساب واصل" ${isPaid ? 'selected' : ''}>حساب واصل</option>
+                                <option value="باقی حساب" ${!isPaid ? 'selected' : ''}>باقی حساب</option>
+                            </select>
+                        </td>
+                        <td class="p-3 text-center">${isPaid ? `<span class="text-slate-400">-</span>` : `<input type="text" value="${fam.manualPaid || 0}" oninput="sanitizeNumericInput(this)" onchange="updateFamilyField('${fam.id}', 'manualPaid', this.value)" class="w-20 text-center px-2 py-1 bg-slate-50 border border-slate-300 rounded-lg font-semibold text-amber-800">`}</td>
+                        <td class="p-3 text-center font-bold text-teal-700">${formatNumber(calc.paid)}</td>
+                        <td class="p-3 text-center font-bold ${calc.balance > 0 ? 'text-rose-600' : 'text-slate-400'}">${formatNumber(calc.balance)}</td>
+                        <td class="p-3 text-center">
+                            <select onchange="updateFamilyField('${fam.id}', 'receiveStatus', this.value)" class="px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-semibold ${isRec ? 'text-emerald-700 bg-emerald-50' : 'text-rose-700 bg-rose-50'}">
+                                <option value="وەریگرت" ${isRec ? 'selected' : ''}>وەریگرت</option>
+                                <option value="وەرنەگرت" ${!isRec ? 'selected' : ''}>وەرنەگرت</option>
+                            </select>
+                        </td>
+                        <td class="p-3 text-center"><input type="date" value="${fam.receiveDate || ''}" onchange="updateFamilyField('${fam.id}', 'receiveDate', this.value)" class="px-2 py-1 bg-slate-50 border border-slate-300 rounded-lg text-[11px]"></td>
+                        <td class="p-3 text-center font-semibold text-emerald-800">${calc.rationsCalc.sugar.toFixed(1)}</td>
+                        <td class="p-3 text-center font-semibold text-emerald-800">${calc.rationsCalc.flour.toFixed(1)}</td>
+                        <td class="p-3 text-center font-semibold text-emerald-800">${calc.rationsCalc.rice.toFixed(1)}</td>
+                        <td class="p-3 text-center font-semibold text-emerald-800">${calc.rationsCalc.oil.toFixed(1)}</td>
+                        <td class="p-3 text-center font-semibold text-emerald-800">${calc.rationsCalc.paste.toFixed(1)}</td>
+                        <td class="p-3 text-center font-semibold text-emerald-800">${calc.rationsCalc.lentils.toFixed(1)}</td>
+                        <td class="p-3 text-center font-semibold text-emerald-800">${calc.rationsCalc.groats.toFixed(1)}</td>
+                        <td class="p-3 text-center">
+                            <select onchange="updateFamilyField('${fam.id}', 'unreceivedFood', this.value)" class="px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs">
+                                ${UNRECEIVED_FOOD_OPTIONS.map(opt => `<option value="${opt}" ${fam.unreceivedFood === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td class="p-3"><input type="text" value="${fam.notes || ''}" onchange="updateFamilyField('${fam.id}', 'notes', this.value)" placeholder="تێبینی..." class="w-full px-2 py-1 bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-emerald-500 rounded-lg"></td>
+                        <td class="p-3 text-center flex items-center justify-center gap-1.5">
+                            <button onclick="openReceiptModal('${fam.id}')" title="پسوڵە" class="p-1.5 bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-700 rounded-lg"><i class="fas fa-print"></i></button>
+                            <button onclick="confirmDeleteFamily('${fam.id}')" title="سڕینەوە" class="p-1.5 bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 rounded-lg"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html || `<tr><td colspan="20" class="text-center py-8 text-slate-400">هیچ خێزانێک تۆمار نەکراوە</td></tr>`;
+            totalRow.innerHTML = `
+                <td class="p-3 text-center">-</td>
+                <td class="p-3 font-bold">کۆی گشتی (${filtered.length} خێزان)</td>
+                <td class="p-3 text-center font-bold">${formatNumber(sumMembers)}</td>
+                <td class="p-3 text-center font-bold">${formatNumber(sumReq)}</td>
+                <td colspan="2" class="text-center">-</td>
+                <td class="p-3 text-center font-bold text-teal-800">${formatNumber(sumPaid)}</td>
+                <td class="p-3 text-center font-bold text-rose-700">${formatNumber(sumBal)}</td>
+                <td class="p-3 text-center font-bold text-emerald-800">${cRec} وەرگر</td>
+                <td class="p-3 text-center">-</td>
+                <td class="p-3 text-center font-bold">${sumS.toFixed(1)}</td>
+                <td class="p-3 text-center font-bold">${sumF.toFixed(1)}</td>
+                <td class="p-3 text-center font-bold">${sumR.toFixed(1)}</td>
+                <td class="p-3 text-center font-bold">${sumO.toFixed(1)}</td>
+                <td class="p-3 text-center font-bold">${sumP.toFixed(1)}</td>
+                <td class="p-3 text-center font-bold">${sumL.toFixed(1)}</td>
+                <td class="p-3 text-center font-bold">${sumG.toFixed(1)}</td>
+                <td class="p-3 text-center font-bold text-rose-600">${cUnrec} وەرنەگر</td>
+                <td colspan="2"></td>
+            `;
+
+            document.getElementById('kpiTotalMembers').textContent = formatNumber(sumMembers);
+            document.getElementById('kpiTotalPaid').textContent = formatNumber(sumPaid) + ' د.ع';
+            document.getElementById('kpiTotalRequired').textContent = formatNumber(sumReq);
+            document.getElementById('kpiTotalDebt').textContent = formatNumber(sumBal) + ' د.ع';
+            document.getElementById('kpiReceivedCount').textContent = cRec;
+            document.getElementById('kpiUnreceivedCount').textContent = cUnrec;
+            document.getElementById('kpiReceivePercentage').textContent = `ڕێژەی وەرگرتن: ${filtered.length > 0 ? Math.round((cRec / filtered.length) * 100) : 0}٪`;
+        };
+
+        function renderWarehouse() {
+            let totalMem = 0, recMem = 0;
+            appState.families.forEach(f => {
+                const m = Number(convertToEnglishDigits(f.members) || 0);
+                totalMem += m;
+                if (f.receiveStatus === 'وەریگرت') recMem += m;
+            });
+
+            document.getElementById('whTargetPeople').textContent = formatNumber(appState.settings.targetPeople);
+            document.getElementById('whReceivedPeople').textContent = formatNumber(recMem);
+            document.getElementById('whRemainingPeople').textContent = formatNumber(Math.max(0, appState.settings.targetPeople - totalMem));
+
+            const items = [
+                { name: 'شەکر', unit: 'کیلۆ', ratio: Number(appState.settings.rations.sugar) },
+                { name: 'ئارد (هارد)', unit: 'کیلۆ', ratio: Number(appState.settings.rations.flour) },
+                { name: 'برنج', unit: 'کیلۆ', ratio: Number(appState.settings.rations.rice) },
+                { name: 'زەیت', unit: 'بتڵ', ratio: Number(appState.settings.rations.oil) },
+                { name: 'معجون', unit: 'قوتو', ratio: Number(appState.settings.rations.paste) },
+                { name: 'نیسک', unit: 'کیلۆ', ratio: Number(appState.settings.rations.lentils) },
+                { name: 'ئارینۆک', unit: 'کیلۆ', ratio: Number(appState.settings.rations.groats) },
+            ];
+
+            let html = '';
+            items.forEach((item, idx) => {
+                const totalInWH = Number(appState.settings.targetPeople) * item.ratio;
+                const distributed = totalMem * item.ratio;
+                const remaining = totalInWH - distributed;
+                const pct = totalInWH > 0 ? (distributed / totalInWH) : 0;
+                let badge = '<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[11px] font-semibold">بەردەستە</span>';
+                if (remaining <= 0) badge = '<span class="px-2.5 py-1 bg-teal-100 text-teal-800 rounded-lg text-[11px] font-semibold">تەواو بوو</span>';
+
+                html += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 text-center">${idx + 1}</td>
+                        <td class="p-3 font-bold">${item.name}</td>
+                        <td class="p-3 text-center">${item.unit}</td>
+                        <td class="p-3 text-center font-semibold">${item.ratio}</td>
+                        <td class="p-3 text-center font-bold">${totalInWH.toFixed(1)}</td>
+                        <td class="p-3 text-center font-bold text-emerald-700">${distributed.toFixed(1)}</td>
+                        <td class="p-3 text-center font-bold ${remaining < 0 ? 'text-rose-600' : ''}">${remaining.toFixed(1)}</td>
+                        <td class="p-3 text-center font-bold">${Math.round(pct * 100)}٪</td>
+                        <td class="p-3 text-center">${badge}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('warehouseTableBody').innerHTML = html;
+        }
+
+        window.openArchiveConfirmModal = () => {
+            if (appState.families.length === 0) { showToast('هیچ خێزانێک نییە', true); return; }
+            openModal('archiveConfirmModal');
+        };
+
+        window.executeArchiveCycle = async () => {
+            const nextName = document.getElementById('nextCycleNameInput').value.trim() || 'خولی نوێ';
+            let tMem = 0, tPaid = 0, tBal = 0, tS = 0, tF = 0, tR = 0, tO = 0, tP = 0, tL = 0, tG = 0;
+
+            appState.families.forEach(f => {
+                const c = calculateFamilyValues(f);
+                tMem += c.members; tPaid += c.paid; tBal += c.balance;
+                tS += c.rationsCalc.sugar; tF += c.rationsCalc.flour; tR += c.rationsCalc.rice;
+                tO += c.rationsCalc.oil; tP += c.rationsCalc.paste; tL += c.rationsCalc.lentils; tG += c.rationsCalc.groats;
+            });
+
+            appState.archives.unshift({
+                id: 'archive-' + Date.now(),
+                cycleName: appState.settings.currentMonth,
+                archiveDate: getTodayDate(),
+                familyCount: appState.families.length,
+                totalMembers: tMem, totalPaid: tPaid, totalBalance: tBal,
+                rationsTotal: { sugar: tS, flour: tF, rice: tR, oil: tO, paste: tP, lentils: tL, groats: tG },
+                familiesSnapshot: JSON.parse(JSON.stringify(appState.families))
+            });
+
+            appState.settings.currentMonth = nextName;
+            appState.families = [];
+            closeModal('archiveConfirmModal');
+            updateHeaderLabels();
+            renderAll();
+            await saveState();
+            showToast('خولەکە نێردرا بۆ ئەرشیف!');
+            switchTab('archive');
+        };
+
+        window.renderArchive = () => {
+            const tbody = document.getElementById('archiveTableBody');
+            if (!tbody) return;
+            const searchTxt = (document.getElementById('archiveSearchInput')?.value || '').trim().toLowerCase();
+            const filtered = appState.archives.filter(a => a.cycleName.toLowerCase().includes(searchTxt));
+
+            let html = '';
+            filtered.forEach((arch, idx) => {
+                html += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 text-center">${idx + 1}</td>
+                        <td class="p-3 font-bold">${arch.cycleName}</td>
+                        <td class="p-3 text-center">${arch.archiveDate}</td>
+                        <td class="p-3 text-center">${arch.familyCount} خێزان</td>
+                        <td class="p-3 text-center">${formatNumber(arch.totalMembers)} نەفەر</td>
+                        <td class="p-3 text-center font-bold text-teal-700">${formatNumber(arch.totalPaid)} د.ع</td>
+                        <td class="p-3 text-center font-bold">${formatNumber(arch.totalBalance)} د.ع</td>
+                        <td class="p-3 text-center flex items-center justify-center gap-2">
+                            <button onclick="openArchiveDetailsModal('${arch.id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-emerald-100 rounded-lg font-medium">وردەکاری</button>
+                            <button onclick="confirmDeleteArchive('${arch.id}')" class="p-1.5 bg-slate-100 hover:bg-rose-100 text-rose-700 rounded-lg"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || `<tr><td colspan="8" class="text-center py-8 text-slate-400">هیچ ئەرشیفێک نییە</td></tr>`;
+        };
+
+        window.openArchiveDetailsModal = (archId) => {
+            const arch = appState.archives.find(a => a.id === archId);
+            if (!arch) return;
+            selectedArchiveIndex = archId;
+            document.getElementById('archiveModalTitle').textContent = `وردەکاری خول: ${arch.cycleName}`;
+            let h = `<div class="grid grid-cols-4 gap-3">
+                <div class="bg-slate-50 p-3 rounded-xl border"><span>خێزان:</span> <strong>${arch.familyCount}</strong></div>
+                <div class="bg-slate-50 p-3 rounded-xl border"><span>نەفەر:</span> <strong>${formatNumber(arch.totalMembers)}</strong></div>
+                <div class="bg-slate-50 p-3 rounded-xl border"><span>واصل:</span> <strong class="text-teal-700">${formatNumber(arch.totalPaid)} د.ع</strong></div>
+                <div class="bg-slate-50 p-3 rounded-xl border"><span>باقی:</span> <strong class="text-rose-600">${formatNumber(arch.totalBalance)} د.ع</strong></div>
+            </div><div class="overflow-x-auto rounded-xl border"><table class="w-full text-right text-xs"><thead class="bg-slate-800 text-white"><tr><th class="p-2.5 text-center">ز</th><th class="p-2.5">ناو</th><th class="p-2.5 text-center">نەفەر</th><th class="p-2.5 text-center">واصل</th><th class="p-2.5 text-center">دۆخ</th></tr></thead><tbody class="divide-y">`;
+            arch.familiesSnapshot.forEach((f, i) => {
+                const c = calculateFamilyValues(f);
+                h += `<tr><td class="p-2.5 text-center">${i+1}</td><td class="p-2.5 font-medium">${f.name}</td><td class="p-2.5 text-center">${f.members}</td><td class="p-2.5 text-center font-bold text-teal-700">${formatNumber(c.paid)}</td><td class="p-2.5 text-center">${f.receiveStatus}</td></tr>`;
+            });
+            h += `</tbody></table></div>`;
+            document.getElementById('archiveModalContent').innerHTML = h;
+            openModal('archiveDetailsModal');
+        };
+
+        window.confirmDeleteArchive = async (id) => {
+            if (confirm('ئایا دڵنیای لە سڕینەوەی ئەم ئەرشیفە؟')) {
+                appState.archives = appState.archives.filter(a => a.id !== id);
+                renderArchive();
+                await saveState();
+                showToast('ئەرشیف سڕایەوە!');
+            }
+        };
+
+        window.openReceiptModal = (famId) => {
+            const fam = appState.families.find(f => f.id === famId);
+            if (!fam) return;
+            const c = calculateFamilyValues(fam);
+            document.getElementById('receiptContent').innerHTML = `
+                <div class="text-center pb-2 border-b"><h4 class="font-bold">${appState.settings.centerName}</h4><p class="text-[11px] text-slate-500">${appState.settings.currentMonth}</p></div>
+                <div class="grid grid-cols-2 gap-2 text-xs py-2">
+                    <div><span>ناو:</span> <strong>${fam.name}</strong></div>
+                    <div><span>نەفەر:</span> <strong>${fam.members}</strong></div>
+                    <div><span>داواکراو:</span> <strong>${formatNumber(c.totalRequired)} د.ع</strong></div>
+                    <div><span>واصل:</span> <strong class="text-teal-700">${formatNumber(c.paid)} د.ع</strong></div>
+                    <div><span>قەرز:</span> <strong class="text-rose-600">${formatNumber(c.balance)} د.ع</strong></div>
+                    <div><span>دۆخ:</span> <strong>${fam.receiveStatus}</strong></div>
+                </div>
+            `;
+            openModal('receiptModal');
+        };
+
+        function populateSettingsForm() {
+            const s = appState.settings;
+            document.getElementById('settingCenterName').value = s.centerName || '';
+            document.getElementById('settingTargetPeople').value = s.targetPeople || 1428;
+            document.getElementById('settingPricePerPerson').value = s.pricePerPerson || 2000;
+            document.getElementById('ratioSugar').value = s.rations.sugar;
+            document.getElementById('ratioFlour').value = s.rations.flour;
+            document.getElementById('ratioRice').value = s.rations.rice;
+            document.getElementById('ratioOil').value = s.rations.oil;
+            document.getElementById('ratioPaste').value = s.rations.paste;
+            document.getElementById('ratioLentils').value = s.rations.lentils;
+            document.getElementById('ratioGroats').value = s.rations.groats;
+        }
+
+        window.saveSettings = async () => {
+            appState.settings.centerName = document.getElementById('settingCenterName').value.trim() || DEFAULT_SETTINGS.centerName;
+            appState.settings.targetPeople = Number(convertToEnglishDigits(document.getElementById('settingTargetPeople').value) || 1428);
+            appState.settings.pricePerPerson = Number(convertToEnglishDigits(document.getElementById('settingPricePerPerson').value) || 2000);
+            appState.settings.rations = {
+                sugar: Number(convertToEnglishDigits(document.getElementById('ratioSugar').value) || 1),
+                flour: Number(convertToEnglishDigits(document.getElementById('ratioFlour').value) || 9),
+                rice: Number(convertToEnglishDigits(document.getElementById('ratioRice').value) || 3),
+                oil: Number(convertToEnglishDigits(document.getElementById('ratioOil').value) || 1),
+                paste: Number(convertToEnglishDigits(document.getElementById('ratioPaste').value) || 1),
+                lentils: Number(convertToEnglishDigits(document.getElementById('ratioLentils').value) || 0.5),
+                groats: Number(convertToEnglishDigits(document.getElementById('ratioGroats').value) || 0.5)
+            };
+            updateHeaderLabels();
+            renderAll();
+            closeModal('settingsModal');
+            await saveState();
+            showToast('ڕێکخستنەکان پاشەکەوت کران!');
+        };
+
+        window.resetDefaultSettings = async () => {
+            if (confirm('گەڕاندنەوەی بۆ دۆخی بنەڕەتی؟')) {
+                appState.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+                populateSettingsForm();
+                updateHeaderLabels();
+                renderAll();
+                closeModal('settingsModal');
+                await saveState();
+                showToast('گەڕێنراوەوە بۆ بنەڕەت!');
+            }
+        };
+
+        function renderAll() { renderTable(); renderWarehouse(); }
+
+        window.exportToCSV = () => {
+            let csv = '\uFEFFز,ناو,نەفەر,کۆی پارە,دۆخ,دراو,واصل,باقی,وەرگرتن\n';
+            appState.families.forEach((f, i) => {
+                const c = calculateFamilyValues(f);
+                csv += `"${i+1}","${f.name}","${f.members}","${c.totalRequired}","${f.accountStatus}","${f.manualPaid}","${c.paid}","${c.balance}","${f.receiveStatus}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `Ration_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+            URL.revokeObjectURL(url);
+            showToast('ئێکسل دابەزی!');
+        };
+
+        window.exportArchiveToCSVFromModal = () => {
+            const arch = appState.archives.find(a => a.id === selectedArchiveIndex);
+            if (!arch) return;
+            let csv = '\uFEFFز,ناو,نەفەر,واصل,وەرگرتن\n';
+            arch.familiesSnapshot.forEach((f, i) => {
+                const c = calculateFamilyValues(f);
+                csv += `"${i+1}","${f.name}","${f.members}","${c.paid}","${f.receiveStatus}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `Archive_${arch.cycleName}.csv`; a.click();
+            URL.revokeObjectURL(url);
+            showToast('ئەرشیف هەناردە کرا!');
+        };
+
+        window.downloadJSONBackup = () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", `Backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(a); a.click(); a.remove();
+            showToast('باکئەپ داگیرا!');
+        };
+
+        window.restoreJSONBackup = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.settings && data.families) {
+                        appState.settings = data.settings;
+                        appState.families = data.families;
+                        appState.archives = data.archives || [];
+                        populateSettingsForm();
+                        updateHeaderLabels();
+                        renderAll();
+                        await saveState();
+                        showToast('داتاکان گەڕێنرانەوە!');
+                        closeModal('backupModal');
+                    } else {
+                        showToast('فایلی باکئەپ هەڵەیە!', true);
+                    }
+                } catch (err) {
+                    showToast('هەڵە لە خوێندنەوەی فایل!', true);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        async function initCloudSystem() {
+            populateSettingsForm();
+            updateHeaderLabels();
+            renderAll();
+            if (!firebaseConfig) { updateSyncStatus('error', 'هەور بەردەست نییە'); return; }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (!user) return;
+                    currentUser = user;
+                    document.getElementById('displayUserId').textContent = user.uid;
+                    subscribeToUserState(user.uid);
+                });
+            } catch (err) {
+                updateSyncStatus('error', 'هەڵە لە هەور');
+            }
+        }
+
+        function subscribeToUserState(userId) {
+            if (!db || !userId) return;
+            if (unsubscribeDoc) unsubscribeDoc();
+            const ref = doc(db, 'artifacts', appId, 'users', userId, 'rationSystem', 'mainState');
+            unsubscribeDoc = onSnapshot(ref, async (snap) => {
+                if (snap.exists()) {
+                    isApplyingRemoteUpdate = true;
+                    const d = snap.data();
+                    appState.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}), rations: { ...DEFAULT_SETTINGS.rations, ...(d.settings?.rations || {}) } };
+                    appState.families = Array.isArray(d.families) ? d.families : [];
+                    appState.archives = Array.isArray(d.archives) ? d.archives : [];
+                    populateSettingsForm();
+                    updateHeaderLabels();
+                    renderAll();
+                    if (!document.getElementById('section-archive').classList.contains('hidden')) renderArchive();
+                    isApplyingRemoteUpdate = false;
+                    updateSyncStatus('synced', 'لەسەر هەور پارێزراوە');
+                } else {
+                    await saveState();
+                }
+            }, (error) => {
+                updateSyncStatus('error', 'کێشە لە هاوکاتکردن');
+            });
+        }
+
+        async function saveState() {
+            if (isApplyingRemoteUpdate || !db || !currentUser) return;
+            updateSyncStatus('saving', 'پاشەکەوتکردن...');
+            try {
+                const ref = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'rationSystem', 'mainState');
+                await setDoc(ref, { settings: appState.settings, families: appState.families, archives: appState.archives, updatedAt: new Date().toISOString() });
+                updateSyncStatus('synced', 'لەسەر هەور پارێزراوە');
+            } catch (err) {
+                updateSyncStatus('error', 'پاشەکەوت نەکرا');
+            }
+        }
+
+        window.onload = () => { initCloudSystem(); };
+    </script>
+</body>
+</html>
